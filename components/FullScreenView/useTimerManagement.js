@@ -135,6 +135,7 @@ const useTimerManagement = (assignments, globalTimers, isAllPlaying, videoRefs, 
       setTimerStates((prev) => {
         if (prev.timer1.inDelay) {
           if (prev.timer1.delayTimeLeft <= 1) {
+            playBeepSound();
             videoRefs.current.forEach((ref, index) => {
               if (ref && assignments[index] && index !== 1 && ref.restart) ref.restart();
             });
@@ -158,7 +159,6 @@ const useTimerManagement = (assignments, globalTimers, isAllPlaying, videoRefs, 
           };
         } else {
           if (prev.timer1.timeLeft <= 1) {
-            console.log("🔔 Station timer ended - playing beep sound");
             playBeepSound();
 
             return {

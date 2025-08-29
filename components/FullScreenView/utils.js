@@ -37,62 +37,39 @@ export const formatTime = (seconds) => {
 };
 
 export const playBeepSound = () => {
-  const playIndividualChime = (delay = 0) => {
-    setTimeout(() => {
-      try {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator1 = audioContext.createOscillator();
-        const oscillator2 = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
+  try {
+    const AudioCtx = window.AudioContext;
+    const audioContext = new AudioCtx();
 
-        oscillator1.connect(gainNode);
-        oscillator2.connect(gainNode);
-        gainNode.connect(audioContext.destination);
+    const playBeep = (startTime) => {
+      const osc = audioContext.createOscillator();
+      const gain = audioContext.createGain();
 
-        // Pleasant, warm frequencies (like a gentle bell)
-        oscillator1.frequency.setValueAtTime(800, audioContext.currentTime);
-        oscillator2.frequency.setValueAtTime(1200, audioContext.currentTime);
+      osc.type = "square"; // classic alarm-style beep
+      osc.frequency.setValueAtTime(400, startTime); // lower so it's not shrill
 
-        oscillator1.type = "sine";
-        oscillator2.type = "sine";
+      osc.connect(gain);
+      gain.connect(audioContext.destination);
 
-        // Gentle volume with smooth fade in and out
-        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-        gainNode.gain.linearRampToValueAtTime(0.4, audioContext.currentTime + 0.1);
-        gainNode.gain.setValueAtTime(0.4, audioContext.currentTime + 0.5);
-        gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.8);
+      // Hard on/off envelope (no fade to keep it consistent)
+      gain.gain.setValueAtTime(1, startTime);
+      gain.gain.setValueAtTime(0, startTime + 0.25); // 250ms beep
 
-        oscillator1.start(audioContext.currentTime);
-        oscillator1.stop(audioContext.currentTime + 0.8);
-        oscillator2.start(audioContext.currentTime);
-        oscillator2.stop(audioContext.currentTime + 0.8);
+      osc.start(startTime);
+      osc.stop(startTime + 0.25);
+    };
 
-        // Clean up this audio context
-        setTimeout(() => {
-          try {
-            audioContext.close();
-          } catch (e) {
-            console.warn("Audio context cleanup failed:", e);
-          }
-        }, 1000);
-      } catch (error) {
-        console.warn("Could not play individual chime:", error);
-        // Fallback for this individual chime
-        try {
-          const audio = new Audio(
-            "data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmEaAzGHz+rJeCMF"
-          );
-          audio.volume = 0.5;
-          audio.play().catch(() => {
-            console.warn("Fallback chime failed");
-          });
-        } catch (e) {
-          console.warn("Fallback chime failed:", e);
-        }
-      }
-    }, delay);
-  };
+    const now = audioContext.currentTime;
+    playBeep(now); // first beep
+    playBeep(now + 0.4); // second beep, 400ms later
 
-  // Play 4 gentle chimes with 1200ms intervals for a pleasant notification
-  for (let i = 0; i < 4; i++) playIndividualChime(i * 1200);
+    // close cleanly after done
+    setTimeout(() => audioContext.close(), 1000);
+  } catch (e) {
+    console.warn("Beep sound failed:", e);
+  }
 };
+
+if (typeof window !== "undefined") {
+  window.playBeepSound = playBeepSound;
+}
