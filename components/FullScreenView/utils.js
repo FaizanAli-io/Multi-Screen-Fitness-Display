@@ -36,35 +36,37 @@ export const formatTime = (seconds) => {
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 };
 
-export const playBeepSound = () => {
+let audioContext = null;
+
+export const playBeepSound = async () => {
   try {
-    const AudioCtx = window.AudioContext;
-    const audioContext = new AudioCtx();
+    if (!audioContext) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      audioContext = new AudioCtx();
+    }
+
+    if (audioContext.state === "suspended") await audioContext.resume();
 
     const playBeep = (startTime) => {
       const osc = audioContext.createOscillator();
       const gain = audioContext.createGain();
 
-      osc.type = "square"; // classic alarm-style beep
-      osc.frequency.setValueAtTime(400, startTime); // lower so it's not shrill
+      osc.type = "square";
+      osc.frequency.setValueAtTime(500, startTime);
 
       osc.connect(gain);
       gain.connect(audioContext.destination);
 
-      // Hard on/off envelope (no fade to keep it consistent)
       gain.gain.setValueAtTime(1, startTime);
-      gain.gain.setValueAtTime(0, startTime + 0.25); // 250ms beep
+      gain.gain.setValueAtTime(0, startTime + 0.4);
 
       osc.start(startTime);
-      osc.stop(startTime + 0.25);
+      osc.stop(startTime + 0.4);
     };
 
     const now = audioContext.currentTime;
-    playBeep(now); // first beep
-    playBeep(now + 0.4); // second beep, 400ms later
-
-    // close cleanly after done
-    setTimeout(() => audioContext.close(), 1000);
+    playBeep(now + 1);
+    playBeep(now);
   } catch (e) {
     console.warn("Beep sound failed:", e);
   }
