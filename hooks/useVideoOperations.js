@@ -11,8 +11,18 @@ export const useVideoOperations = (setVideos, assignments, setAssignments) => {
     if (typeof video === "string") {
       return video.split("/").pop();
     }
-    const videoPath = video?.name || video?.url || "Unknown video";
+    if (video?.name) {
+      return video.name.split("/").pop();
+    }
+    const videoPath = video?.url || "Unknown video";
     return videoPath.split("/").pop();
+  };
+
+  const getVideoUrl = (video) => {
+    if (typeof video === "string") {
+      return video;
+    }
+    return video?.url || "";
   };
 
   const extractS3KeyFromUrl = (url) => {
@@ -110,11 +120,30 @@ export const useVideoOperations = (setVideos, assignments, setAssignments) => {
     }
   };
 
-  const handleDeleteVideo = async (videoUrl) => {
+  const handleDeleteVideo = async (video) => {
+    const videoUrl = getVideoUrl(video);
     // Extract the S3 key properly from the URL
     let key;
 
-    if (typeof videoUrl === "string") {
+    if (typeof video === "string") {
+      if (video.includes("amazonaws.com") || video.includes("s3")) {
+        try {
+          const url = new URL(video);
+          key = decodeURIComponent(url.pathname.slice(1));
+        } catch (err) {
+          console.error("❌ Failed to parse URL:", video);
+          toast({
+            title: "Invalid URL",
+            description: "Invalid video URL format",
+            variant: "destructive"
+          });
+          return;
+        }
+      } else {
+        const fileName = video.split("/").pop();
+        key = `videos/${fileName}`;
+      }
+    } else {
       if (videoUrl.includes("amazonaws.com") || videoUrl.includes("s3")) {
         try {
           const url = new URL(videoUrl);
@@ -129,15 +158,12 @@ export const useVideoOperations = (setVideos, assignments, setAssignments) => {
           return;
         }
       } else {
-        const fileName = videoUrl.split("/").pop();
+        const fileName = getVideoDisplayName(video);
         key = `videos/${fileName}`;
       }
-    } else {
-      const fileName = getVideoDisplayName(videoUrl);
-      key = `videos/${fileName}`;
     }
 
-    setDeleting(videoUrl);
+    setDeleting(video);
 
     try {
       const response = await fetch("/api/videos/delete", {
@@ -193,7 +219,8 @@ export const useVideoOperations = (setVideos, assignments, setAssignments) => {
     }
   };
 
-  const handleRenameVideo = async (videoUrl, newFileName) => {
+  const handleRenameVideo = async (video, newFileName) => {
+    const videoUrl = getVideoUrl(video);
     const oldKey = extractS3KeyFromUrl(videoUrl);
     if (!oldKey) {
       toast({
@@ -257,9 +284,9 @@ export const useVideoOperations = (setVideos, assignments, setAssignments) => {
     }
   };
 
-  const startRename = (videoUrl) => {
-    setRenaming(videoUrl);
-    setNewName(getVideoDisplayName(videoUrl));
+  const startRename = (video) => {
+    setRenaming(video);
+    setNewName(getVideoDisplayName(video));
   };
 
   const cancelRename = () => {
@@ -267,9 +294,9 @@ export const useVideoOperations = (setVideos, assignments, setAssignments) => {
     setNewName("");
   };
 
-  const submitRename = (videoUrl) => {
-    if (newName.trim() && newName !== getVideoDisplayName(videoUrl)) {
-      handleRenameVideo(videoUrl, newName.trim());
+  const submitRename = (video) => {
+    if (newName.trim() && newName !== getVideoDisplayName(video)) {
+      handleRenameVideo(video, newName.trim());
     } else {
       cancelRename();
     }
@@ -282,6 +309,7 @@ export const useVideoOperations = (setVideos, assignments, setAssignments) => {
     newName,
     setNewName,
     getVideoDisplayName,
+    getVideoUrl,
     handleFileUpload,
     handleDeleteVideo,
     startRename,

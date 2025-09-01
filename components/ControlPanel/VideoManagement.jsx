@@ -2,6 +2,7 @@ import React, { useRef } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Upload, Edit2, Trash2, Check, X, FolderOpen } from "lucide-react";
+import { formatFileSize } from "@/lib/utils";
 
 const VideoManagement = ({
   videos,
@@ -18,6 +19,20 @@ const VideoManagement = ({
   submitRename
 }) => {
   const fileInputRef = useRef(null);
+
+  const getVideoSize = (video) => {
+    if (typeof video === "string") {
+      return null; // Old format doesn't have size
+    }
+    return video?.size || null;
+  };
+
+  // Sort videos by size (descending) - largest first
+  const sortedVideos = [...videos].sort((a, b) => {
+    const sizeA = getVideoSize(a) || 0;
+    const sizeB = getVideoSize(b) || 0;
+    return sizeB - sizeA;
+  });
 
   const onFileChange = (event) => {
     const file = event.target.files[0];
@@ -68,8 +83,8 @@ const VideoManagement = ({
               <FolderOpen className="w-4 h-4" />
               Available Videos ({videos.length})
             </h4>
-            <div className="max-h-40 overflow-y-auto space-y-2">
-              {videos.map((video, index) => (
+            <div className="max-h-80 overflow-y-auto space-y-2">
+              {sortedVideos.map((video, index) => (
                 <div
                   key={index}
                   className="flex items-center gap-3 p-3 bg-slate-800/50 rounded-lg border border-slate-600/50"
@@ -103,9 +118,18 @@ const VideoManagement = ({
                     </div>
                   ) : (
                     <>
-                      <span className="flex-1 text-sm text-slate-200 truncate">
-                        {getVideoDisplayName(video)}
-                      </span>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm text-slate-200 truncate">
+                          {getVideoDisplayName(video)}
+                        </div>
+                      </div>
+
+                      {getVideoSize(video) && (
+                        <div className="px-2 py-1 bg-slate-600/50 text-xs text-slate-300 rounded-md border border-slate-500/50">
+                          {formatFileSize(getVideoSize(video))}
+                        </div>
+                      )}
+
                       <div className="flex items-center gap-1">
                         <Button
                           size="sm"

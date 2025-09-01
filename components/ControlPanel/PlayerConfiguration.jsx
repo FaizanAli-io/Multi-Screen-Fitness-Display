@@ -8,6 +8,7 @@ const PlayerConfiguration = ({
   videos,
   globalTimers,
   getVideoDisplayName,
+  getVideoUrl,
   onAssignVideo,
   handleNameChange
 }) => {
@@ -61,7 +62,7 @@ const PlayerConfiguration = ({
                     {videos.map((video, videoIndex) => (
                       <SelectItem
                         key={videoIndex}
-                        value={video}
+                        value={getVideoUrl(video)}
                         className="text-slate-200 hover:bg-indigo-900/30 focus:bg-indigo-900/30"
                       >
                         <div className="flex items-center gap-2">

@@ -120,6 +120,7 @@ const ControlPanel = ({
           videos={videos}
           globalTimers={globalTimers}
           getVideoDisplayName={videoOperations.getVideoDisplayName}
+          getVideoUrl={videoOperations.getVideoUrl}
           onAssignVideo={onAssignVideo}
           handleNameChange={handleNameChange}
         />

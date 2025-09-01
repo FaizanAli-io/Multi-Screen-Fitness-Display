@@ -1,8 +1,8 @@
 "use client";
-import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useWebSocket } from "@/hooks/useWebSocket";
+import { useState, useCallback, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Monitor, Settings, Eye, Play, Pause, StopCircle, Check, WifiOff } from "lucide-react";
 
 const SCREEN_COUNT = 4;
